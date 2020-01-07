@@ -66,6 +66,10 @@
 #define ICE_RENDERER_MAX_ADDR_LEN 46
 #endif
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0x4000 //Do not generate SIGPIPE.
+#endif
+
 typedef struct httpr_connection httpr_connection_t;
 typedef struct httpr_listener httpr_listener_t;
 typedef struct httpr_listener_buffer httpr_listener_buffer_t;

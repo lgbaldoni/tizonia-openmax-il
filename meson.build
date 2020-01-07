@@ -7,11 +7,18 @@ project('tizonia', ['c', 'cpp'], version: '0.19.0', license: 'LGPLv3.0+', meson_
 ##   attributes
 ## * try to understand where the path duplication mentioned on launch
 ##   (xdg_file : /etc/xdg/etc/xdg/tizonia/tizonia.conf) comes from
+## * see about using system libev for everything, if available
+## * test libspotify under osx
+## * see if it would be better to replace pthread_yield() with
+##   sched_yield() instead of pthread_yield_np()
 
 host_os = host_machine.system()
 
 cc = meson.get_compiler('c')
 cxx = meson.get_compiler('cpp')
+
+apple = host_os.startswith('darwin')
+linux = host_os.startswith('linux')
 
 # these are the standard options with default values
 enable_blocking_etb_ftb = get_option('blocking-etb-ftb') #false
@@ -25,7 +32,7 @@ enable_test = get_option('test') #false
 # not present in the original
 enable_docs = get_option('docs') #false
 
-if host_os.startswith('darwin')
+if apple
    enable_alsa = false
 endif
 
@@ -60,15 +67,36 @@ if enable_test
    check_dep = dependency('check', required: true, version: '>=0.9.4')
 endif
 
-rt_dep = cc.find_library('rt', required: true)
 pthread_dep = dependency('threads', required: true)
-uuid_dep = dependency('uuid', required: true, version: '>=2.19.0')
+
+if linux
+   rt_dep = cc.find_library('rt', required: true)
+   uuid_dep = dependency('uuid', required: true, version: '>=2.19.0')
+endif
+
+if apple
+   uuid_dep = []
+endif
+
 
 # it builds without boost_thread, although player requires it in the original
-boost_dep = dependency(
-   'boost', modules: ['filesystem', 'program_options', 'python3'],
-   required: true, version: '>=1.54'
-)
+if linux
+   boost_dep = dependency(
+      'boost', modules: ['filesystem', 'program_options', 'python3'],
+      required: true, version: '>=1.54'
+   )
+endif
+
+# adding 'python' as mudle gives a warning on darwin and then can't link
+if apple
+   boost_dep = declare_dependency(dependencies: [
+      dependency('boost', modules: ['filesystem', 'program_options'],
+         required: true, version: '>=1.54'),
+# ugly hack, find a way out of it
+      cxx.find_library('boost_python37', required: true)
+      ]
+   )
+endif
 
 sqlite3_dep = dependency('sqlite3', required: true, version: '>=3.7.1')
 
@@ -90,9 +118,19 @@ endif
 # see if unifying them would be preferable
 config_h = configuration_data()
 
-if cc.has_function('clock_gettime', dependencies: rt_dep)
-   config_h.set10('HAVE_CLOCK_GETTIME', true, description: 'Define to 1 if you have the `clock_gettime\' function.')
+# perhaps the dependencies keyword can be removed and the test unified
+if linux
+   if cc.has_function('clock_gettime', dependencies: rt_dep)
+      config_h.set10('HAVE_CLOCK_GETTIME', true, description: 'Define to 1 if you have the `clock_gettime\' function.')
+   endif
 endif
+
+if apple
+   if cc.has_function('clock_gettime')
+      config_h.set10('HAVE_CLOCK_GETTIME', true, description: 'Define to 1 if you have the `clock_gettime\' function.')
+   endif
+endif
+
 
 # cannot use has_function_attribute because no_sanitize_address is unsupported,
 # cf. https://mesonbuild.com/Reference-tables.html#gcc-__attribute__

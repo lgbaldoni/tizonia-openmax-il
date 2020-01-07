@@ -1,4 +1,15 @@
 libcurl_dep = dependency('libcurl', required: true, version: '>=7.18.0')
+if apple
+# see if /usr/local/lib can be obtained from some macro
+   libev_dep = declare_dependency(
+      include_directories: include_directories(includedir),
+      dependencies: [
+         cxx.find_library('libev', required: true, dirs: '/usr/local/lib')
+      ]
+   )
+else
+   libev_dep = []
+endif
 
 # create tizplatform_config.h
 tizplatform_config_h = configuration_data()
@@ -13,7 +24,6 @@ configure_file(input: 'tizplatform_config.h.in',
 libtizplatform_sources = [
    'http-parser/http_parser.c',
    'avl/avl.c',
-   'ev/ev.c',
    'tizplatform.c',
    'tizlog.c',
    'tizomxutils.c',
@@ -36,13 +46,21 @@ libtizplatform_sources = [
    'tizurltransfer.c'
 ]
 
+if linux
+   libtizplatform_sources += [
+      'ev/ev.c'
+   ]
+endif
+
+if apple
+   libtizplatform_sources += [
+      'sem_timedwait/sem_timedwait.c'
+   ]
+endif
+
 install_headers(
    'utarray/utarray.h',
    'avl/avl.h',
-   'ev/ev.h',
-   'ev/ev_vars.h',
-   'ev/ev_wrap.h',
-   'ev/ev_epoll.c',
    'http-parser/http_parser.h',
    'tizplatform.h',
    'tizmacros.h',
@@ -69,17 +87,43 @@ install_headers(
    install_dir: tizincludedir
 )
 
+# do we need this?
+if apple
+   install_headers(
+      'sem_timedwait/sem_timedwait.h'
+       install_dir: tizincludedir
+endif
+
+if linux
+   install_headers(
+      'ev/ev.h',
+      'ev/ev_vars.h',
+      'ev/ev_wrap.h',
+      'ev/ev_epoll.c',
+      install_dir: tizincludedir
+   )
+endif
+
+if apple
+   libtizplatform_directories = [
+      include_directories('sem_timedwait')
+   ]
+else
+   libtizplatform_directories = []
+endif
 
 libtizplatform = library(
    'tizplatform',
    version: tizversion,
+   include_directories: libtizplatform_directories,
    sources: libtizplatform_sources,
    dependencies: [
       tizilheaders_dep,
       libcurl_dep,
       pthread_dep,
       uuid_dep,
-      log4c_dep
+      log4c_dep,
+      libev_dep
    ],
    install: true
 )

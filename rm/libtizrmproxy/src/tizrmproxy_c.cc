@@ -237,7 +237,11 @@ tiz_rm_proxy_init(tiz_rm_t * ap_rm, const OMX_STRING ap_name,
                           il_rmproxy_thread_func,
                           p_rm);
 
+#if defined(__APPLE__)
+      pthread_yield_np();
+#else
       pthread_yield();
+#endif
     }
 
   p_rm->ref_count++;
@@ -291,7 +295,11 @@ tiz_rm_proxy_destroy(tiz_rm_t * ap_rm)
 
       p_rm->p_dispatcher->leave();
 
+#if defined(__APPLE__)
+      pthread_yield_np();
+#else
       pthread_yield();
+#endif
 
       rc = stop_proxy();
 

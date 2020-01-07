@@ -179,7 +179,11 @@ tiz_thread_setname (tiz_thread_t * ap_thread, const OMX_STRING a_name)
   assert (ap_thread);
   assert (a_name);
 
+#if defined(__APPLE__)
+  if (PTHREAD_SUCCESS != (error = pthread_setname_np (a_name)))
+#else
   if (PTHREAD_SUCCESS != (error = pthread_setname_np (*ap_thread, a_name)))
+#endif
     {
       TIZ_LOG (TIZ_PRIORITY_ERROR,
                "Could not set the thread's name (%s). "

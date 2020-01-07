@@ -92,6 +92,10 @@
 #define TIZ_LOG_CATEGORY_NAME "tiz.play.app"
 #endif
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 namespace bf = boost::filesystem;
 
 #define APP_NAME "tizonia"

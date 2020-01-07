@@ -35,6 +35,9 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+#if defined(__APPLE__)
+#include <ev.h>
+#endif
 
 #include "tizplatform.h"
 #include "tizplatform_internal.h"

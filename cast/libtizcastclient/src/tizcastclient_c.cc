@@ -266,7 +266,11 @@ tiz_cast_client_init (tiz_cast_ptr_t * app_cast,
       tiz_thread_create (&(p_global->thread), 0, 0, cast_client_thread_func,
                          p_global);
 
+#if defined(__APPLE__)
+      pthread_yield_np();
+#else
       pthread_yield ();
+#endif
     }
 
   p_global->ref_count++;
@@ -311,7 +315,11 @@ tiz_cast_client_destroy (tiz_cast_t * ap_cast)
 
       p_cast->p_dispatcher->leave ();
 
+#if defined(__APPLE__)
+      pthread_yield_np();
+#else
       pthread_yield ();
+#endif
 
       rc = stop_client ();
 

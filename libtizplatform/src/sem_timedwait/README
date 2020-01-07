@@ -1,0 +1,3 @@
+Implementation of sem_timedwait() for OSX.
+Obtained from https://github.com/attie/libxbee3/tree/master/xsys_darwin.
+
