@@ -90,8 +90,9 @@ install_headers(
 # do we need this?
 if apple
    install_headers(
-      'sem_timedwait/sem_timedwait.h'
+      'sem_timedwait/sem_timedwait.h',
        install_dir: tizincludedir
+   )
 endif
 
 if linux

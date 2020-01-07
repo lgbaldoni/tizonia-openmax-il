@@ -35,9 +35,6 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
-#if defined(__APPLE__)
-#include <ev.h>
-#endif
 
 #include "tizplatform.h"
 #include "tizplatform_internal.h"
@@ -58,7 +55,11 @@
 #define EV_FORK_ENABLE 0
 #define EV_VERIFY 1
 
+#if defined(__APPLE__)
+#include <ev.h>
+#else
 #include "ev/ev.c"
+#endif
 
 #ifdef TIZ_LOG_CATEGORY_NAME
 #undef TIZ_LOG_CATEGORY_NAME
