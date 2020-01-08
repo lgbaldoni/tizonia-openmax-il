@@ -3,10 +3,9 @@ project('tizonia', ['c', 'cpp'], version: '0.19.0', license: 'LGPLv3.0+', meson_
 ## note to self:
 ## * patch docs/sphinx-src/conf.py once the xml issue is fixed upstream
 ## * check for warnings during the configuration phase of meson
-## * recheck cc.compiles prototype, looks like it passes even with non-esistent
-##   attributes
 ## * try to understand where the path duplication mentioned on launch
 ##   (xdg_file : /etc/xdg/etc/xdg/tizonia/tizonia.conf) comes from
+##   2020-01-08 update: couldn't reproduce the bug
 ## * see about using system libev for everything, if available
 ## * test libspotify under osx
 ## * see if it would be better to replace pthread_yield() with
@@ -134,8 +133,9 @@ endif
 
 # cannot use has_function_attribute because no_sanitize_address is unsupported,
 # cf. https://mesonbuild.com/Reference-tables.html#gcc-__attribute__
-if cc.compiles('int *foo(void) __attribute__((no_sanitize_address));')
-#   config_h.set10('HAVE_FUNC_ATTRIBUTE_NO_SANITIZE_ADDRESS', true, description: 'Define to 1 if the system has the `no_sanitize_address\' function attribute')
+# using Werror is either suboptimal or sign of a meson bug, inquire further
+if cc.compiles('int *foo(void) __attribute__((no_sanitize_address));', args:'-Werror')
+   config_h.set10('HAVE_FUNC_ATTRIBUTE_NO_SANITIZE_ADDRESS', true, description: 'Define to 1 if the system has the `no_sanitize_address\' function attribute')
 endif
 
 if cc.has_function('select')
@@ -213,7 +213,7 @@ if enable_test
 endif
 
 # summary() instead of the message at the bottom would be neat, but it will be
-# available only on 0.53.0
+# available only in 0.53.0
 message(
 '\n------------------------------------------------------------------------\n'+
 '  '+meson.project_name()+' ' +meson.project_version()+':  Automatic configuration OK.'+'\n'+
